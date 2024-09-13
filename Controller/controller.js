@@ -88,6 +88,47 @@ const getInventory=async(req,res)=>{
    
 }
 
+const handlePurchase = async (req, res) => {
+    try {
+        const { inventoryId, piecesPurchased } = req.body;
+
+        
+        if (!inventoryId || !piecesPurchased) {
+            return res.status(400).json({ message: "Inventory ID and pieces purchased are required" });
+        }
+
+        
+        const inventoryItem = await inventory.findById(inventoryId);
+
+        if (!inventoryItem) {
+            return res.status(404).json({ message: 'Inventory item not found' });
+        }
+
+       
+        if (inventoryItem.piecesPurchased < piecesPurchased) {
+            return res.status(400).json({ message: 'Not enough pieces available' });
+        }
+
+        
+        inventoryItem.piecesPurchased -= piecesPurchased;
+
+    
+        await inventoryItem.save();
+
+       
+        return res.status(200).json({
+            message: 'Purchase successful',
+            inventoryId: inventoryItem._id,
+            piecesAvailable: inventoryItem.piecesPurchased
+        });
+    } catch (error) {
+        console.error("Error in handlePurchase:", error);
+        return res.status(500).json({ message: 'Error while processing the purchase', error: error.message });
+    }
+};
+
 module.exports = {
-    newInventory,getInventory
+    newInventory,
+    getInventory,
+    handlePurchase
 };

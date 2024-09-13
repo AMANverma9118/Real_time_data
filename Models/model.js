@@ -1,4 +1,5 @@
 const mongoose = require("mongoose")
+const { type } = require("os")
 
 const inventorySchema = new mongoose.Schema({
        purchaseDate: {
@@ -36,6 +37,10 @@ const inventorySchema = new mongoose.Schema({
        type: {
               type: String,
               required: true
+       },
+       inventoryId:{
+              type:String,
+              required: false
        }
 })
 
