@@ -7,6 +7,7 @@ const newInventory = async (req, res) => {
             type,
             purchaseDate,
             piecesPurchased,
+            minRequired,
             costPerPiece,
             expiryDate,
             purpose,
@@ -56,6 +57,7 @@ const newInventory = async (req, res) => {
             type,
             purchaseDate,
             piecesPurchased,
+            minRequired,
             costPerPiece,
             expiryDate,
             purpose,
@@ -90,40 +92,44 @@ const getInventory=async(req,res)=>{
 
 const handlePurchase = async (req, res) => {
     try {
-        const { inventoryId, piecesPurchased } = req.body;
+        const { type, piecesPurchased } = req.body;
 
-
-        if (!inventoryId || !piecesPurchased) {
-            return res.status(400).json({ message: "Inventory ID and pieces purchased are required" });
+        // Validate input
+        if (!type || !piecesPurchased) {
+            return res.status(400).json({ message: "Type and pieces purchased are required" });
         }
-        
 
-        const inventoryItem = await inventory.findById(inventoryId);
+        // Find the inventory item by type
+        const inventoryItem = await inventory.findOne({ type });
 
         if (!inventoryItem) {
             return res.status(404).json({ message: 'Inventory item not found' });
         }
 
-    
+        // Retrieve minRequired from the found inventory item
+        const { minRequired } = inventoryItem;
+
+        // Check if there are enough pieces available for the purchase
         if (inventoryItem.piecesPurchased < piecesPurchased) {
             return res.status(400).json({ message: 'Not enough pieces available' });
         }
 
-        
+        // Subtract the purchased pieces
         inventoryItem.piecesPurchased -= piecesPurchased;
 
-      
+        // Save the updated inventory item to the database
         await inventoryItem.save();
 
-        
-        if (inventoryItem.piecesPurchased <= 10) {
+        // Check if the remaining pieces are less than or equal to minRequired
+        if (inventoryItem.piecesPurchased <= minRequired) {
             return res.status(200).json({
-                message: 'Stock is running low. Only ' + inventoryItem.piecesPurchased + ' pieces left.',
+                message: `Stock is running low. Only ${inventoryItem.piecesPurchased} pieces left, which is less than or equal to the minimum required stock (${minRequired}).`,
                 inventoryId: inventoryItem._id,
                 piecesAvailable: inventoryItem.piecesPurchased
             });
         }
 
+        // Send success response
         return res.status(200).json({
             message: 'Purchase successful',
             inventoryId: inventoryItem._id,
@@ -134,6 +140,8 @@ const handlePurchase = async (req, res) => {
         return res.status(500).json({ message: 'Error while processing the purchase', error: error.message });
     }
 };
+
+
 
 
 module.exports = {

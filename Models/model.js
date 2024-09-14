@@ -8,7 +8,11 @@ const inventorySchema = new mongoose.Schema({
        },
        piecesPurchased: {
               type: Number,
-              required: true,
+              required: true
+       },
+       minRequired:{
+              type: Number,
+              required: true
        },
        costPerPiece: {
               type: Number,
